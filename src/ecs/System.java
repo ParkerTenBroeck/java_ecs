@@ -67,6 +67,21 @@ public final class System {
         });
     }
 
+    public static <R1, R2, R3, R4> System makeSystem(final Consume4<R1, R2, R3, R4> func){
+        final var types = resolveGenerics(func.getClass());
+        final var r1_type = (Class<R1>)types[0];
+        final var r2_type = (Class<R2>)types[1];
+        final var r3_type = (Class<R3>)types[2];
+        final var r4_type = (Class<R4>)types[3];
+        return new System((ecs) -> {
+            var r1 = ecs.resources.getResource(r1_type);
+            var r2 = ecs.resources.getResource(r2_type);
+            var r3 = ecs.resources.getResource(r3_type);
+            var r4 = ecs.resources.getResource(r4_type);
+            func.accept(r1, r2, r3, r4);
+        });
+    }
+
     public static <R1, C1> System makeSystem(final Consume1<C1> ts, final Consume2<R1, Query<Tuple1<C1>>> func){
         final var types = resolveGenerics(func.getClass());
         final var r1_type = (Class<R1>)types[0];

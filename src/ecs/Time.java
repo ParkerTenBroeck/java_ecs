@@ -10,6 +10,7 @@ public class Time {
     private double deltaS = 0;
     private double processS = 0;
     private long tick = 0;
+    private double usedTimePercent = 0.0;
 
     public long last(){
         return this.last;
@@ -47,6 +48,9 @@ public class Time {
     public long tick(){
         return this.tick;
     }
+    public double usedTimePercent(){
+        return usedTimePercent;
+    }
 
     protected void update(){
         this.tick ++;
@@ -59,8 +63,9 @@ public class Time {
         this.deltaS = this.delta * 1e-9;
     }
 
-    public void updateProcess() {
+    public void updateProcess(long target) {
         this.process = java.lang.System.nanoTime() - this.current;
         this.processS = this.processS * 1e-9;
+        this.usedTimePercent = ((double)process)/((double)target);
     }
 }
