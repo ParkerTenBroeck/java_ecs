@@ -32,7 +32,7 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
         }
     }
 
-    Storage s1 = new Storage();
+    final Storage s1 = new Storage();
     Storage s2 = new Storage();
 
 
@@ -79,13 +79,16 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
     }
 
     public void update() {
-        s2 = s1.clone();
-        for(int i = 0; i < 4; i ++) {
-            s1.mousePressed[i] = false;
-            s1.mouseReleased[i] = false;
+        synchronized (s1){
+            s2 = s1.clone();
+            for(int i = 0; i < 4; i ++) {
+                s1.mousePressed[i] = false;
+                s1.mouseReleased[i] = false;
+            }
+            s1.keyReleased.clear();
+            s1.keyPressed.clear();
         }
-        s1.keyReleased.clear();
-        s1.keyPressed.clear();
+
     }
 
 
@@ -107,14 +110,18 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
 
     @Override
     public void keyPressed(KeyEvent e) {
-        s1.keyPressed.add(e.getKeyChar());
-        s1.keyHeld.add(e.getKeyChar());
+        synchronized (s1) {
+            s1.keyPressed.add(e.getKeyChar());
+            s1.keyHeld.add(e.getKeyChar());
+        }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
-        s1.keyHeld.remove(e.getKeyChar());
-        s1.keyReleased.add(e.getKeyChar());
+        synchronized (s1){
+            s1.keyHeld.remove(e.getKeyChar());
+            s1.keyReleased.add(e.getKeyChar());
+        }
     }
 
     @Override

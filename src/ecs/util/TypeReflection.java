@@ -25,14 +25,11 @@ public class TypeReflection {
             Object lookupStaticFieldBase = unsafe.staticFieldBase(implLookupField);
             MethodHandles.Lookup implLookup = (MethodHandles.Lookup) unsafe.getObject(lookupStaticFieldBase, implLookupFieldOffset);
             final MethodHandle overrideSetter = implLookup.findSetter(AccessibleObject.class, "override", boolean.class);
-            var makeAccessible = new Consumer<AccessibleObject>() {
-                @Override
-                public void accept(AccessibleObject object) {
-                    try{
-                        overrideSetter.invokeWithArguments(object, true);
-                    }catch (Throwable e){
-                        throw new RuntimeException(e);
-                    }
+            Consumer<AccessibleObject> makeAccessible = object -> {
+                try{
+                    overrideSetter.invokeWithArguments(object, true);
+                }catch (Throwable e){
+                    throw new RuntimeException(e);
                 }
             };
 

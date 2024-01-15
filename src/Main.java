@@ -1,4 +1,5 @@
 import ecs.ECS;
+import ecs.Query;
 import ecs.Time;
 import ecs.util.tupple.Tuple2;
 import io.Display;
@@ -13,25 +14,16 @@ public class Main {
     public static void main(String[] args) {
 
         var ecs_ = new ECS();
-        ecs_.resources.addResource(new Cube());
-        ecs_.resources.addResource(new ArrayList<Cube>());
 
-        ecs_.addSystem(ecs.System.makeSystem((Display display, Input input, Time time, ArrayList<Cube> cubes) -> {
+        ecs_.addEntity(new Position(), new Drawable(), new Player());
+
+        ecs_.addSystem(ecs.System.makeSystem((Display display) -> {
             var g = display.getGraphics();
             g.setColor(Color.BLACK);
             g.fillRect(0,0,display.getWidth(), display.getHeight());
-
-            g.setColor(Color.WHITE);
-            g.drawString("delta: " + time.deltaS() + "S", 0,10);
-            g.drawString("updateTime: " + time.process() + "ns", 0,25);
-            g.drawString("timeLeft: " + time.usedTimePercent() + "%", 0,40);
-            g.drawString("tick: " + time.tick(), 0,55);
-            g.drawString("cubes: " + cubes.size(), 0,70);
-            g.drawString("MouseX: " + input.getMouseX(), 0,90);
-            g.drawString("MouseY: " + input.getMouseY(), 0,105);
         }));
 
-        ecs_.addSystem(ecs.System.makeSystem((Cube cube, ArrayList<Cube> cubes, Input input, Time time) -> {
+        ecs_.addSystem(ecs.System.makeSystem((_1, _2) -> {}, (Input input, Time time, Query<Tuple2<Player, Position>> query) -> {
             double speed = 100.0;
             var speedX = 0.0;
             if (input.keyHeld('a')){
@@ -47,49 +39,64 @@ public class Main {
                 speedY += speed;
             }
 
-            cube.x += time.deltaS() * speedX;
-            cube.y += time.deltaS() * speedY;
-
-            for(Cube cuben : cubes){
-                cuben.x += time.deltaS() * speedX;
-                cuben.y += time.deltaS() * speedY;
+            Query.Entity<Tuple2<Player, Position>> cube;
+            while((cube = query.next()) != null){
+                cube.tuple.t2.x += time.deltaS() * speedX;
+                cube.tuple.t2.y += time.deltaS() * speedY;
             }
         }));
 
-        ecs_.addSystem(ecs.System.makeSystem((Cube cube, Display display) -> {
+        ecs_.addSystem(ecs.System.makeSystem((_1, _2) -> {}, (Display display, Query<Tuple2<Position, Drawable>> query) -> {
             var g = display.getGraphics();
-            g.setColor(Color.RED);
-            g.fillRect((int)cube.x, (int)cube.y, 10, 10);
-        }));
-
-        ecs_.addSystem(ecs.System.makeSystem((ArrayList<Cube> cubes, Display display) -> {
-            var g = display.getGraphics();
-            for(Cube cube : cubes){
-                g.setColor(Color.RED);
-                g.fillRect((int)cube.x, (int)cube.y, 10, 10);
+            Query.Entity<Tuple2<Position, Drawable>> cube;
+            while((cube = query.next()) != null){
+                g.setColor(cube.tuple.t2.color);
+                g.fillRect((int)cube.tuple.t1.x , (int)cube.tuple.t1.y, 10, 10);
             }
         }));
 
-        ecs_.addSystem(ecs.System.makeSystem((ArrayList<Cube> cubes, Display display, Input input) -> {
+        ecs_.addSystem(ecs.System.makeSystem((ECS ecs__, Input input, Time time) -> {
             if (input.mouseHeld(Input.MouseKey.Left)){
-                cubes.add(new Cube(input.getMouseX(), input.getMouseY()));
+                var drawable = new Drawable(Color.getHSBColor((float)(time.currentS() % 360) ,1.0f, 1.0f));
+                ecs__.addEntity(new Position(input.getMouseX(), input.getMouseY()), drawable);
             }
+        }));
+
+        ecs_.addSystem(ecs.System.makeSystem((Display display, Input input, Time time) -> {
+            var g = display.getGraphics();
+
+            g.setColor(Color.WHITE);
+            g.drawString("delta: " + time.deltaS() + "S", 0,10);
+            g.drawString("updateTime: " + time.process() + "ns", 0,25);
+            g.drawString("timeLeft: " + time.usedTimePercent() + "%", 0,40);
+            g.drawString("tick: " + time.tick(), 0,55);
+//            g.drawString("cubes: " + cubes.size(), 0,70);
+            g.drawString("MouseX: " + input.getMouseX(), 0,90);
+            g.drawString("MouseY: " + input.getMouseY(), 0,105);
         }));
 
         ecs_.run();
     }
 }
 
-class Cube{
+class Position{
     double x = 50;
     double y = 50;
 
-    public Cube(){
+    public Position(){}
 
-    }
-
-    public Cube(double x, double y) {
+    public Position(double x, double y) {
         this.x = x;
         this.y = y;
     }
 }
+
+class Drawable{
+    Color color = Color.green;
+    public Drawable(){}
+    public Drawable(Color color) {
+        this.color = color;
+    }
+}
+
+class Player{}
