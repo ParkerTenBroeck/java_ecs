@@ -90,10 +90,17 @@ public final class ECS {
 
             time.updateProcess(targetFrameTime);
             long sleep = this.targetFrameTime - time.process();
-            sleep = sleep<0?0:sleep;
+            sleep = sleep<10000?10000:sleep;
             try{Thread.sleep(sleep / 1000000, (int)(sleep % 1000000));} catch (Exception e){}
         }
     }
 
 
+    public int countEntities() {
+        int count = 0;
+        for(var v : this.entityArchetypes.values()){
+            count += v.size();
+        }
+        return count;
+    }
 }

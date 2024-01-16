@@ -106,12 +106,42 @@ public final class System {
         });
     }
 
+    public static <R1, C1, C2, C3> System makeSystem(final Consume3<C1, C2, C3> ts, final Consume2<R1, Query<Tuple3<C1, C2, C3>>> func){
+        final var types = resolveGenerics(func.getClass());
+        final var r1_type = (Class<R1>)types[0];
+        final var components = (Class<?>[])resolveGenerics(ts.getClass());
+        final var tuple = new Tuple3<C1, C2, C3>();
+        final var iter = new Query<>(tuple, components);
+        return new System((ecs) -> {
+            iter.setup(ecs);
+            iter.reset();
+            var r1 = ecs.resources.getResource(r1_type);
+            func.accept(r1, iter);
+        });
+    }
+
     public static <R1, R2, C1, C2> System makeSystem(final Consume2<C1, C2> ts, final Consume3<R1, R2, Query<Tuple2<C1, C2>>> func){
         final var types = resolveGenerics(func.getClass());
         final var r1_type = (Class<R1>)types[0];
         final var r2_type = (Class<R2>)types[1];
         final var components = (Class<?>[])resolveGenerics(ts.getClass());
         final var tuple = new Tuple2<C1, C2>();
+        final var iter = new Query<>(tuple, components);
+        return new System((ecs) -> {
+            iter.setup(ecs);
+            iter.reset();
+            var r1 = ecs.resources.getResource(r1_type);
+            var r2 = ecs.resources.getResource(r2_type);
+            func.accept(r1, r2, iter);
+        });
+    }
+
+    public static <R1, R2, C1, C2, C3> System makeSystem(final Consume3<C1, C2, C3> ts, final Consume3<R1, R2, Query<Tuple3<C1, C2, C3>>> func){
+        final var types = resolveGenerics(func.getClass());
+        final var r1_type = (Class<R1>)types[0];
+        final var r2_type = (Class<R2>)types[1];
+        final var components = (Class<?>[])resolveGenerics(ts.getClass());
+        final var tuple = new Tuple3<C1, C2, C3>();
         final var iter = new Query<>(tuple, components);
         return new System((ecs) -> {
             iter.setup(ecs);

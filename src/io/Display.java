@@ -20,7 +20,6 @@ public class Display {
         frame = new JFrame("ECS");
         image = new BufferedImage(WINDOW_X, WINDOW_Y, 1);
 
-
         var insets = frame.getInsets();
         var frameHeight = insets.top + insets.bottom + WINDOW_Y;
         var frameWidth = insets.left + insets.right + WINDOW_X;
@@ -28,10 +27,8 @@ public class Display {
         frame.setPreferredSize(new Dimension(frameWidth, frameHeight));
         frame.setMinimumSize(new Dimension(frameWidth, frameHeight));
 
-
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setResizable(false);
-
 
         panel = new JPanel() {
             @Override
@@ -42,6 +39,7 @@ public class Display {
         };
         panel.setBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
 
+        panel.setDoubleBuffered(true);
         frame.addKeyListener(input);
         panel.addMouseListener(input);
         panel.addMouseMotionListener(input);
@@ -52,11 +50,8 @@ public class Display {
         panel.setMinimumSize(new Dimension(WINDOW_X, WINDOW_Y));
 
         panel.setSize(WINDOW_X, WINDOW_Y);
-
         frame.add(panel);
-
         frame.pack();
-
         frame.setVisible(true);
         this.update();
     }

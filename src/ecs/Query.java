@@ -1,15 +1,16 @@
 package ecs;
 
-import ecs.util.tupple.Tuple2;
+import ecs.util.tupple.DynTuple;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 
-public class Query<Tuple> {
+public class Query<Tuple extends DynTuple> implements Cloneable{
 
     private Class<?>[] components;
     private HashMap<Long, Object>[] componentMaps;
+    private Object[] cache;
     long architype;
     private Tuple t1;
     private Entity<Tuple> entity = new Entity<>();
@@ -19,6 +20,7 @@ public class Query<Tuple> {
     protected Query(Tuple t1, Class<?>[] components){
         this.components = components;
         this.componentMaps = new HashMap[components.length];
+        this.cache = new Object[components.length];
         this.t1 = t1;
     }
 
@@ -55,22 +57,33 @@ public class Query<Tuple> {
                 top = iter.get(iter.size() - 1);
             }
             var entity = top.next();
-            if (this.entity.tuple instanceof Tuple2<?,?> tuple){
-                test(tuple, entity);
+            for(int i = 0; i < cache.length; i ++){
+                this.cache[i] = this.componentMaps[i].get(entity);
             }
+            this.entity.tuple.set(this.cache);
             this.entity.entity = entity;
             return this.entity;
         }
     }
 
-    private <T1, T2> void test(Tuple2<T1, T2> tuple, long entity){
-        tuple.t1 = (T1)this.componentMaps[0].get(entity);
-        tuple.t2 = (T2)this.componentMaps[1].get(entity);
-    }
-
     public static class Entity<Tuple> {
         public long entity;
         public Tuple tuple;
+    }
+
+    @Override
+    public Query<Tuple> clone(){
+        Query<Tuple> clone = null;
+        try{
+            clone = (Query<Tuple>) super.clone();
+        }catch (Exception ignore){}
+
+        clone.entity = new Entity<>();
+        clone.entity.tuple = (Tuple) this.entity.tuple.copy();
+        clone.cache = new Object[clone.cache.length];
+        clone.iter = new ArrayList<>();
+        clone.reset();
+        return clone;
     }
 }
 
