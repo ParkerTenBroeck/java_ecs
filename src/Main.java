@@ -14,7 +14,7 @@ public class Main {
 
         var ecs_ = new ECS();
 
-        ecs_.addEntity(new Position(), new Drawable(), new Player(), new HitBox());
+        ecs_.addEntity(new Position(), new Drawable(), new Player(), new HitBox(30, 30, 1), new Velocity());
 
         ecs_.addSystem(ecs.System.makeSystem((Display display) -> {
             var g = display.getGraphics();
@@ -22,8 +22,8 @@ public class Main {
             g.fillRect(0,0,display.getWidth(), display.getHeight());
         }));
 
-        ecs_.addSystem(ecs.System.makeSystem((_1, _2) -> {}, (Input input, Time time, Query<Tuple2<Player, Position>> query) -> {
-            double speed = 100.0;
+        ecs_.addSystem(ecs.System.makeSystem((_1, _2, _3) -> {}, (Input input, Time time, Query<Tuple3<Player, Position, Velocity>> query) -> {
+            double speed = 200.0;
             var speedX = 0.0;
             if (input.keyHeld('a')){
                 speedX -= speed;
@@ -38,10 +38,13 @@ public class Main {
                 speedY += speed;
             }
 
-            Query.Entity<Tuple2<Player, Position>> cube;
+            Query.Entity<Tuple3<Player, Position, Velocity>> cube;
             while((cube = query.next()) != null){
                 cube.tuple.t2.x += time.deltaS() * speedX;
                 cube.tuple.t2.y += time.deltaS() * speedY;
+
+                cube.tuple.t3.x = speedX;
+                cube.tuple.t3.y = speedY;
             }
         }));
 
@@ -55,9 +58,12 @@ public class Main {
         ecs_.addSystem(ecs.System.makeSystem((_1, _2, _3) -> {}, (Display display, Time time, Query<Tuple3<Position, Velocity, HitBox>> query) -> {
             Query.Entity<Tuple3<Position, Velocity, HitBox>> physics;
 
-            int steps = 4;
+            int steps = 2;
             double bounce = 0.714;
             double delta = time.deltaS() / steps;
+
+            double pm = 0.35;
+            double pv = 1-pm;
 
             for(int i = 0; i < steps; i ++){
 
@@ -80,24 +86,18 @@ public class Main {
                             var dx = min - dist;
                             var dy = min - dist;
 
+
                             var mx = 0.5 * dx * nx;
                             var my = 0.5 * dy * ny;
-//                            physics.tuple.t1.x += mx;
-//                            physics.tuple.t1.y += my;
-//                            physics2.tuple.t1.x -= mx;
-//                            physics2.tuple.t1.y -= my;
+                            physics.tuple.t1.x += mx * pm;
+                            physics.tuple.t1.y += my * pm;
+                            physics2.tuple.t1.x -= mx * pm;
+                            physics2.tuple.t1.y -= my * pm;
 
-
-//                            var bv = 0.9 * nx;
-//                            physics.tuple.t2.x *= -bv;
-//                            physics.tuple.t2.y *= -bv;
-//                            physics2.tuple.t2.x *= -bv;
-//                            physics2.tuple.t2.y *= -bv;
-
-                            physics.tuple.t2.x += mx / delta * 0.40;
-                            physics.tuple.t2.y += my / delta * 0.40;
-                            physics2.tuple.t2.x -= mx / delta * 0.40;
-                            physics2.tuple.t2.y -= my / delta * 0.40;
+                            physics.tuple.t2.x += mx / delta * pv;
+                            physics.tuple.t2.y += my / delta * pv;
+                            physics2.tuple.t2.x -= mx / delta * pv;
+                            physics2.tuple.t2.y -= my / delta * pv;
                         }
                     }
                 }
@@ -108,10 +108,7 @@ public class Main {
                     physics.tuple.t1.y += physics.tuple.t2.y * delta;
                 }
 
-                query.reset();
-                while((physics = query.next()) != null){
-                    physics.tuple.t2.y += 100 * 9.81 * delta;
-                }
+
 
                 query.reset();
                 double width = display.getWidth();
@@ -142,6 +139,11 @@ public class Main {
                         physics.tuple.t2.y *= -bounce;
                     }
                 }
+
+                query.reset();
+                while((physics = query.next()) != null){
+                    physics.tuple.t2.y += 100 * 9.81 * delta;
+                }
                 query.reset();
             }
         }));
@@ -163,9 +165,10 @@ public class Main {
         }));
 
         ecs_.addSystem(ecs.System.makeSystem((ECS ecs__, Input input, Time time) -> {
-            if (input.mouseHeld(Input.MouseKey.Left)){
+            if (input.mouseHeld(Input.MouseKey.Left) && (time.tick() & 2) == 0){
                 var drawable = new Drawable(Color.getHSBColor((float)(time.currentS() % 360) ,1.0f, 1.0f));
-                ecs__.addEntity(new Position(input.getMouseX(), input.getMouseY()), drawable, new HitBox(30, 30, 2), new Velocity());
+                var random = Math.random() * 20 + 25;
+                ecs__.addEntity(new Position(input.getMouseX(), input.getMouseY()), drawable, new HitBox(random, random, 2), new Velocity());
             }
         }));
 
@@ -230,7 +233,7 @@ class HitBox {
 
 class Drawable{
     Color color = Color.green;
-    int shape = 1;
+    int shape = 2;
 
     public Drawable(){}
 
