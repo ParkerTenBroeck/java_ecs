@@ -1,16 +1,23 @@
 import ecs.ECS;
 import ecs.Query;
 import ecs.Time;
+import ecs.util.TypeReflection;
+import ecs.util.tupple.Tuple1;
 import ecs.util.tupple.Tuple2;
 import ecs.util.tupple.Tuple3;
+import ecs.util.tupple.Tuple4;
 import io.Display;
 import io.Input;
 
+import javax.swing.*;
 import java.awt.*;
 
 public class Main {
 
     public static void main(String[] args) {
+
+//        var tuple = new Tuple4<String, Integer, JFrame, Long>("null", 4, null, null);
+
 
         var ecs_ = new ECS();
 
@@ -38,7 +45,8 @@ public class Main {
                 speedY += speed;
             }
 
-            Query.Entity<Tuple3<Player, Position, Velocity>> cube;
+            query.reset();
+            Query<Tuple3<Player, Position, Velocity>>.Entity cube;
             while((cube = query.next()) != null){
                 cube.tuple.t2.x += time.deltaS() * speedX;
                 cube.tuple.t2.y += time.deltaS() * speedY;
@@ -49,71 +57,72 @@ public class Main {
         }));
 
         ecs_.addSystem(ecs.System.makeSystem((_1, _2) -> {}, (Time time, Query<Tuple2<Player, Drawable>> query) -> {
-            Query.Entity<Tuple2<Player, Drawable>> player;
+            Query<Tuple2<Player, Drawable>>.Entity player;
+            query.reset();
             while((player = query.next()) != null){
                 player.tuple.t2.color = Color.getHSBColor((float)(time.currentS() % 360) ,1.0f, 1.0f);
             }
         }));
 
         ecs_.addSystem(ecs.System.makeSystem((_1, _2, _3) -> {}, (Display display, Time time, Query<Tuple3<Position, Velocity, HitBox>> query) -> {
-            Query.Entity<Tuple3<Position, Velocity, HitBox>> physics;
+            Query<Tuple3<Position, Velocity, HitBox>>.Entity physics;
 
-            int steps = 2;
+            int steps = 1;
             double bounce = 0.714;
             double delta = time.deltaS() / steps;
 
-            double pm = 0.35;
-            double pv = 1-pm;
+            double pm = 0.7;
+            double pv = 0.90;
 
             for(int i = 0; i < steps; i ++){
 
-                var query2 = query.clone();
-                Query.Entity<Tuple3<Position, Velocity, HitBox>> physics2;
-                while((physics = query.next()) != null){
-                    query2.reset();
-                    while((physics2 = query2.next()) != null) {
-                        if (physics2.entity == physics.entity){
-                            continue;
-                        }
-
-                        double difX = physics.tuple.t1.x - physics2.tuple.t1.x;
-                        double difY = physics.tuple.t1.y - physics2.tuple.t1.y;
-                        double dist = Math.sqrt(difX * difX + difY * difY);
-                        double min = (physics.tuple.t3.width + physics2.tuple.t3.width) / 2;
-                        if (dist < min && dist != 0){
-                            var nx = difX / dist;
-                            var ny = difY / dist;
-                            var dx = min - dist;
-                            var dy = min - dist;
-
-
-                            var mx = 0.5 * dx * nx;
-                            var my = 0.5 * dy * ny;
-                            physics.tuple.t1.x += mx * pm;
-                            physics.tuple.t1.y += my * pm;
-                            physics2.tuple.t1.x -= mx * pm;
-                            physics2.tuple.t1.y -= my * pm;
-
-                            physics.tuple.t2.x += mx / delta * pv;
-                            physics.tuple.t2.y += my / delta * pv;
-                            physics2.tuple.t2.x -= mx / delta * pv;
-                            physics2.tuple.t2.y -= my / delta * pv;
-                        }
-                    }
-                }
 
                 query.reset();
-                while((physics = query.next()) != null){
-                    physics.tuple.t1.x += physics.tuple.t2.x * delta;
-                    physics.tuple.t1.y += physics.tuple.t2.y * delta;
-                }
+                var pair = query.nextPair();
+                // yes this is sorta cursed but whatever
+                // the tuples keep the same reference so we don't need to go through so many different steps
+                // to get to our data
+                var obj1 = pair==null?null:pair.t1.tuple;
+                var obj2 = pair==null?null:pair.t2.tuple;
+                while(pair != null) {
 
+                    double difX = obj1.t1.x - obj2.t1.x;
+                    double difY = obj1.t1.y - obj2.t1.y;
+                    double dist = Math.sqrt(difX * difX + difY * difY);
+                    double min = (obj1.t3.width + obj2.t3.width) / 2;
+                    if (dist < min && dist != 0) {
+                        var nx = difX / dist;
+                        var ny = difY / dist;
+                        var dx = min - dist;
+                        var dy = min - dist;
+
+
+                        var mx = 0.5 * dx * nx;
+                        var my = 0.5 * dy * ny;
+                        obj1.t1.x += mx * pm;
+                        obj1.t1.y += my * pm;
+                        obj2.t1.x -= mx * pm;
+                        obj2.t1.y -= my * pm;
+
+                        obj1.t2.x += mx / delta * pv;
+                        obj1.t2.y += my / delta * pv;
+                        obj2.t2.x -= mx / delta * pv;
+                        obj2.t2.y -= my / delta * pv;
+                    }
+                    pair = query.nextPair();
+                }
 
 
                 query.reset();
                 double width = display.getWidth();
                 double height = display.getHeight() - 35;
                 while((physics = query.next()) != null){
+
+                    // apply velocity
+                    physics.tuple.t1.x += physics.tuple.t2.x * delta;
+                    physics.tuple.t1.y += physics.tuple.t2.y * delta;
+
+                    // bounds checking
                     var rad = physics.tuple.t3.width/2;
                     var lx = physics.tuple.t1.x - rad;
                     var rx = physics.tuple.t1.x + rad;
@@ -138,20 +147,18 @@ public class Main {
 
                         physics.tuple.t2.y *= -bounce;
                     }
-                }
 
-                query.reset();
-                while((physics = query.next()) != null){
+                    // acceleration
                     physics.tuple.t2.y += 100 * 9.81 * delta;
                 }
-                query.reset();
             }
         }));
 
         ecs_.addSystem(ecs.System.makeSystem((_1, _2, _3) -> {}, (Display display, Query<Tuple3<Position, Drawable, HitBox>> query) -> {
             var g = display.getGraphics();
-            Query.Entity<Tuple3<Position, Drawable, HitBox>> cube;
-            while((cube = query.next()) != null){
+            query.reset();
+            var cube = query.next();
+            while(cube != null){
                 g.setColor(cube.tuple.t2.color);
                 switch (cube.tuple.t3.shape){
                     case 1:
@@ -161,14 +168,32 @@ public class Main {
                         g.fillOval((int)(cube.tuple.t1.x - cube.tuple.t3.width/2) , (int)(cube.tuple.t1.y - cube.tuple.t3.height/2), (int)cube.tuple.t3.width, (int)cube.tuple.t3.height);
                         break;
                 }
+                cube = query.next();
             }
         }));
 
-        ecs_.addSystem(ecs.System.makeSystem((ECS ecs__, Input input, Time time) -> {
+        ecs_.addSystem(ecs.System.makeSystem((_1, _2) -> {}, (ECS ecs__, Input input, Time time, Query<Tuple2<Position, HitBox>> query) -> {
             if (input.mouseHeld(Input.MouseKey.Left) && (time.tick() & 2) == 0){
                 var drawable = new Drawable(Color.getHSBColor((float)(time.currentS() % 360) ,1.0f, 1.0f));
-                var random = Math.random() * 20 + 25;
+                var random = Math.random() * 25 + 45;
                 ecs__.addEntity(new Position(input.getMouseX(), input.getMouseY()), drawable, new HitBox(random, random, 2), new Velocity());
+            }
+            if(!input.mouseHeld(Input.MouseKey.Right)){
+                return;
+            }
+            query.exclude(Player.class);
+            query.reset();
+            var thing = query.next();
+            while(thing != null){
+                var dx = thing.tuple.t1.x - input.getMouseX();
+                var dy = thing.tuple.t1.y - input.getMouseY();
+                var ds = dx * dx + dy * dy;
+                var rs = thing.tuple.t2.width * thing.tuple.t2.width / 4;
+                if(ds <= rs){
+                    thing.remove();
+                }
+
+                thing = query.next();
             }
         }));
 

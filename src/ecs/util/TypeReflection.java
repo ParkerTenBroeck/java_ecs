@@ -14,7 +14,7 @@ public class TypeReflection {
     private static Method GET_CONSTANT_POOL_SIZE;
     private static Method GET_CONSTANT_POOL_METHOD_AT;
 
-    static{
+    static {
         try {
             final Field f = Unsafe.class.getDeclaredField("theUnsafe");
             f.setAccessible(true);
@@ -26,9 +26,9 @@ public class TypeReflection {
             MethodHandles.Lookup implLookup = (MethodHandles.Lookup) unsafe.getObject(lookupStaticFieldBase, implLookupFieldOffset);
             final MethodHandle overrideSetter = implLookup.findSetter(AccessibleObject.class, "override", boolean.class);
             Consumer<AccessibleObject> makeAccessible = object -> {
-                try{
+                try {
                     overrideSetter.invokeWithArguments(object, true);
-                }catch (Throwable e){
+                } catch (Throwable e) {
                     throw new RuntimeException(e);
                 }
             };
@@ -51,16 +51,17 @@ public class TypeReflection {
             throw new RuntimeException(e);
         }
     }
-    public static Type[] resolveGenericInterfaceArguments(Class<?> implementee, Type genericInterface){
-        if (implementee.isSynthetic()){
-            try{
+
+    public static Type[] resolveGenericInterfaceArguments(Class<?> implementee, Type genericInterface) {
+        if (implementee.isSynthetic()) {
+            try {
                 var pool = GET_CONSTANT_POOL.invoke(JAVA_LANG_ACCESS, implementee);
-                int num = (Integer)GET_CONSTANT_POOL_SIZE.invoke(pool);
-                for(int i = 0; i < num; i ++){
+                int num = (Integer) GET_CONSTANT_POOL_SIZE.invoke(pool);
+                for (int i = 0; i < num; i++) {
                     Member member;
-                    try{
-                       member = (Method)GET_CONSTANT_POOL_METHOD_AT.invoke(pool, i);
-                    }catch (Exception ignore){
+                    try {
+                        member = (Method) GET_CONSTANT_POOL_METHOD_AT.invoke(pool, i);
+                    } catch (Exception ignore) {
                         member = null;
                     }
                     if (member == null
@@ -70,10 +71,10 @@ public class TypeReflection {
                         continue;
                     return ((Method) member).getParameterTypes();
                 }
-            }catch (Exception e){
+            } catch (Exception e) {
                 throw new RuntimeException(e);
             }
-        }else{
+        } else {
             return ((ParameterizedType) genericInterface).getActualTypeArguments();
         }
         return null;

@@ -12,6 +12,7 @@ public final class ECS {
     protected final HashMap<Long, ArrayList<Long>> entityArchetypes = new HashMap<>();
     protected final HashMap<String, HashMap<Long, Object>> componentMap = new HashMap<>();
     private final ArrayList<String> activeComponents = new ArrayList<>();
+    private final ArrayList<Long> toRemove = new ArrayList<>();
 
     public final ResourceManager resources = new ResourceManager();
     ArrayList<System> systems = new ArrayList<>();
@@ -85,6 +86,11 @@ public final class ECS {
                 system.runner.accept(this);
             }
 
+            for(int i = 0; i < toRemove.size(); i ++){
+                removeFully(toRemove.get(i));
+            }
+            toRemove.clear();
+
             display.update();
             input.update();
 
@@ -102,5 +108,21 @@ public final class ECS {
             count += v.size();
         }
         return count;
+    }
+
+    public void remove(long entity){
+        this.toRemove.add(entity);
+    }
+
+    private void removeFully(long entity) {
+        long archetype = 0;
+        for(var entry : this.componentMap.entrySet()){
+            var removed = entry.getValue().remove(entity);
+            if(removed != null){
+                archetype |= 1 << activeComponents.indexOf(entry.getKey());
+            }
+        }
+
+        this.entityArchetypes.get(archetype).remove(entity);
     }
 }
