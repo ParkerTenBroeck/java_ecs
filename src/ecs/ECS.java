@@ -8,7 +8,7 @@ import java.util.HashMap;
 
 public final class ECS {
 
-    private long entityId = 0;
+    private long entityId = 1;
     protected final HashMap<Long, ArrayList<Long>> entityArchetypes = new HashMap<>();
     protected final HashMap<String, HashMap<Long, Object>> componentMap = new HashMap<>();
     private final ArrayList<String> activeComponents = new ArrayList<>();
@@ -28,6 +28,10 @@ public final class ECS {
         resources.addResource(input);
         resources.addResource(display);
         resources.addResource(this);
+    }
+
+    public <T> void addResource(T resource){
+        this.resources.addResource(resource);
     }
 
     public void addSystem(System system){

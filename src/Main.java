@@ -16,10 +16,8 @@ public class Main {
 
     public static void main(String[] args) {
 
-//        var tuple = new Tuple4<String, Integer, JFrame, Long>("null", 4, null, null);
-
-
         var ecs_ = new ECS();
+        ecs_.addResource(new Debug());
 
         ecs_.addEntity(new Position(), new Drawable(), new Player(), new HitBox(30, 30, 1), new Velocity());
 
@@ -197,7 +195,30 @@ public class Main {
             }
         }));
 
-        ecs_.addSystem(ecs.System.makeSystem((ECS ecs__, Display display, Input input, Time time) -> {
+        ecs_.addSystem(ecs.System.makeSystem((Input input, Debug debug) -> {
+            if(input.keyPressed(' '))
+                debug.enabled ^= true;
+        }));
+
+        ecs_.addSystem(ecs.System.makeSystem((_1) -> {}, (Display display, Debug debug, Query<Tuple1<Position>> query) -> {
+            if(!debug.enabled)
+                return;
+
+            var g = display.getGraphics();
+            g.setColor(Color.WHITE);
+
+            query.reset();
+            query.include(Drawable.class);
+            var de = query.next();
+            while(de != null){
+                g.drawString(""+de.entity, (int)de.tuple.t1.x-10, (int)de.tuple.t1.y+5);
+                de = query.next();
+            }
+        }));
+
+        ecs_.addSystem(ecs.System.makeSystem((ECS ecs__, Display display, Input input, Time time, Debug debug) -> {
+            if(!debug.enabled)
+                return;
             var g = display.getGraphics();
 
             g.setColor(Color.WHITE);
@@ -212,6 +233,10 @@ public class Main {
 
         ecs_.run();
     }
+}
+
+class Debug{
+    boolean enabled = true;
 }
 
 class Velocity{
