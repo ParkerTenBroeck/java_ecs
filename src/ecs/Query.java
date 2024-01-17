@@ -62,7 +62,8 @@ public class Query<Tuple extends DynTuple> implements Cloneable{
         for(var v : this.ecs.entityArchetypes.entrySet()){
             long needed = (this.tupleArchetype | this.includeArchetype) & ~this.optionalArchetype;
             if ((needed & v.getKey()) == needed && (this.excludeArchetype & v.getKey()) == 0){
-                iter.add(v.getValue().iterator());
+                if(!v.getValue().isEmpty())
+                    iter.add(v.getValue().iterator());
                 this.iterLen += v.getValue().size();
             }
         }
@@ -116,11 +117,11 @@ public class Query<Tuple extends DynTuple> implements Cloneable{
         }
 
         if(j >= this.iterLen){
+            i ++;
+            j = i+1;
             if(i >= this.iterLen - 1){
                 return null;
             }
-            i ++;
-            j = i+1;
         }
         if(i == 0){
             this.entityCache[j] = this.nextId();
