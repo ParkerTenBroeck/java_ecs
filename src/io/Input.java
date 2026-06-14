@@ -7,9 +7,9 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
 
 
     private static class Storage implements Cloneable{
-        private HashSet<Character> keyPressed = new HashSet<>();
-        private HashSet<Character> keyHeld = new HashSet<>();
-        private HashSet<Character> keyReleased = new HashSet<>();
+        private HashSet<Integer> keyPressed = new HashSet<>();
+        private HashSet<Integer> keyHeld = new HashSet<>();
+        private HashSet<Integer> keyReleased = new HashSet<>();
         private boolean[] mousePressed = new boolean[4];
         private boolean[] mouseHeld = new boolean[4];
         private boolean[] mouseReleased = new boolean[4];
@@ -20,9 +20,9 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
         @Override
         public Storage clone(){
             var other = new Storage();
-            other.keyPressed = (HashSet<Character>) this.keyPressed.clone();
-            other.keyHeld = (HashSet<Character>) this.keyHeld.clone();
-            other.keyReleased = (HashSet<Character>) this.keyReleased.clone();
+            other.keyPressed = (HashSet<Integer>) this.keyPressed.clone();
+            other.keyHeld = (HashSet<Integer>) this.keyHeld.clone();
+            other.keyReleased = (HashSet<Integer>) this.keyReleased.clone();
             other.mousePressed = this.mousePressed.clone();
             other.mouseHeld = this.mouseHeld.clone();
             other.mouseReleased = this.mouseReleased.clone();
@@ -38,13 +38,13 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
 
 
 
-    public boolean keyPressed(char key){
+    public boolean keyPressed(int key){
         return s2.keyPressed.contains(key);
     }
-    public boolean keyHeld(char key){
+    public boolean keyHeld(int key){
         return s2.keyHeld.contains(key);
     }
-    public boolean keyReleased(char key){
+    public boolean keyReleased(int key){
         return s2.keyReleased.contains(key);
     }
 
@@ -111,16 +111,16 @@ public class Input implements KeyListener, MouseListener, MouseMotionListener {
     @Override
     public void keyPressed(KeyEvent e) {
         synchronized (s1) {
-            s1.keyPressed.add(e.getKeyChar());
-            s1.keyHeld.add(e.getKeyChar());
+            s1.keyPressed.add(e.getKeyCode());
+            s1.keyHeld.add(e.getKeyCode());
         }
     }
 
     @Override
     public void keyReleased(KeyEvent e) {
         synchronized (s1){
-            s1.keyHeld.remove(e.getKeyChar());
-            s1.keyReleased.add(e.getKeyChar());
+            s1.keyHeld.remove(e.getKeyCode());
+            s1.keyReleased.add(e.getKeyCode());
         }
     }
 

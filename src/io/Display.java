@@ -14,8 +14,11 @@ public class Display {
 
     public Display(Input input) {
 
-        int WINDOW_X = 720;
-        int WINDOW_Y = 480;
+//        int WINDOW_X = 720;
+//        int WINDOW_Y = 480;
+
+        int WINDOW_X = 1200;
+        int WINDOW_Y = 700;
 
         frame = new JFrame("ECS");
         image = new BufferedImage(WINDOW_X, WINDOW_Y, 1);

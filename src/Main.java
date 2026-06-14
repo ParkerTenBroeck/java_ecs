@@ -11,6 +11,8 @@ import io.Input;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.concurrent.ConcurrentLinkedDeque;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Main {
 
@@ -30,16 +32,18 @@ public class Main {
         ecs_.addSystem(ecs.System.makeSystem((_1, _2, _3) -> {}, (Input input, Time time, Query<Tuple3<Player, Position, Velocity>> query) -> {
             double speed = 200.0;
             var speedX = 0.0;
-            if (input.keyHeld('a')){
+            if (input.keyHeld('A')){
                 speedX -= speed;
-            }else if(input.keyHeld('d')){
+            }
+            if(input.keyHeld('D')){
                 speedX += speed;
             }
 
             var speedY = 0.0;
-            if (input.keyHeld('w')){
+            if (input.keyHeld('W')){
                 speedY -= speed;
-            }else if(input.keyHeld('s')){
+            }
+            if(input.keyHeld('S')){
                 speedY += speed;
             }
 
@@ -62,6 +66,7 @@ public class Main {
             }
         }));
 
+
         ecs_.addSystem(ecs.System.makeSystem((_1, _2, _3) -> {}, (Display display, Time time, Query<Tuple3<Position, Velocity, HitBox>> query) -> {
             Query<Tuple3<Position, Velocity, HitBox>>.Entity physics;
 
@@ -74,15 +79,15 @@ public class Main {
 
             for(int i = 0; i < steps; i ++){
 
-
                 query.reset();
+
                 var pair = query.nextPair();
                 // yes this is sorta cursed but whatever
                 // the tuples keep the same reference so we don't need to go through so many different steps
                 // to get to our data
-                var obj1 = pair==null?null:pair.t1.tuple;
-                var obj2 = pair==null?null:pair.t2.tuple;
-                while(pair != null) {
+                var obj1 = pair == null ? null : pair.t1.tuple;
+                var obj2 = pair == null ? null : pair.t2.tuple;
+                while (pair != null) {
 
                     double difX = obj1.t1.x - obj2.t1.x;
                     double difY = obj1.t1.y - obj2.t1.y;

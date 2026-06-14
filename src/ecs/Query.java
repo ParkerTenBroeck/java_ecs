@@ -103,7 +103,7 @@ public class Query<Tuple extends DynTuple> implements Cloneable{
         }
     }
 
-    public Tuple2<Entity, Entity> nextPair(){
+    public synchronized Tuple2<Entity, Entity> nextPair(){
         if(i == 0 && j == 0){
             if(this.entityCache == null || this.entityCache.length <= this.iterLen){
                 this.entityCache = new long[this.iterLen + 20];
